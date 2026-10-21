@@ -1,0 +1,41 @@
+{
+  "rules": {
+    "config": { ".read": false, ".write": false },
+    "hosts": {
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid && (!newData.exists() || (root.child('config/hostKey').exists() && newData.val() === root.child('config/hostKey').val()))"
+      }
+    },
+    "quiz": {
+      "state": {
+        ".read": "auth != null && root.child('config/hostKey').exists() && root.child('hosts').child(auth.uid).val() === root.child('config/hostKey').val()",
+        ".write": "auth != null && root.child('config/hostKey').exists() && root.child('hosts').child(auth.uid).val() === root.child('config/hostKey').val()"
+      },
+      "live": {
+        ".read": true,
+        ".write": "auth != null && root.child('config/hostKey').exists() && root.child('hosts').child(auth.uid).val() === root.child('config/hostKey').val()"
+      },
+      "answers": {
+        ".read": true,
+        ".write": "auth != null && root.child('config/hostKey').exists() && root.child('hosts').child(auth.uid).val() === root.child('config/hostKey').val()",
+        "$qid": { "$team": { ".write": true } }
+      }
+    },
+    "teams": { ".read": true, ".write": true },
+    "pins": {
+      ".read": "auth != null && root.child('config/hostKey').exists() && root.child('hosts').child(auth.uid).val() === root.child('config/hostKey').val()",
+      ".write": "auth != null && root.child('config/hostKey').exists() && root.child('hosts').child(auth.uid).val() === root.child('config/hostKey').val()",
+      "$team": {
+        ".write": "!data.exists()",
+        "$pin": {
+          ".read": true,
+          ".validate": "$pin.matches(/^[0-9]{4}$/)"
+        }
+      }
+    },
+    "session": {
+      ".read": true,
+      ".write": "auth != null && root.child('config/hostKey').exists() && root.child('hosts').child(auth.uid).val() === root.child('config/hostKey').val()"
+    }
+  }
+}
