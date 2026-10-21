@@ -111,6 +111,8 @@ function enter(team, pin = null) {
   saveTeam(S.team);
   S.join = emptyJoin();
   S.notice = '';
+  // 문제가 열린 뒤에 입장하면 응답 시간은 입장한 때부터 잰다(첫 터치부터 재면 0초가 된다).
+  if (S.live?.phase === 'quiz' && S.live.open) seenAt(S.live.id);
   syncWatches();
   draw();
 }
