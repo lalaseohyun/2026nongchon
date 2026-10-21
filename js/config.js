@@ -20,9 +20,9 @@ export const EVENT = {
 // Firebase 콘솔 > 프로젝트 설정 > 내 앱 > SDK 설정 및 구성의 값을 그대로 붙여 넣는다.
 // databaseURL은 지역이 포함된 전체 주소여야 한다 (...asia-southeast1.firebasedatabase.app).
 export const FIREBASE = {
-  apiKey: 'AIzaSyBfC2mj0Wn5hxewk9mROxs-rtLLWHpt_yQ',
-  authDomain: 'gimje-31fa2.firebaseapp.com',
-  databaseURL: 'https://gimje-31fa2-default-rtdb.asia-southeast1.firebasedatabase.app',
-  projectId: 'gimje-31fa2',
-  appId: '1:745554895893:web:871658b06bbabbcfe91a1c'
+  apiKey: 'AIzaSyC2hjEUzXlzUCnV7Q-tWAmTt8Vh7JznsGY',
+  authDomain: 'nongchon-quiz.firebaseapp.com',
+  databaseURL: 'https://nongchon-quiz-default-rtdb.asia-southeast1.firebasedatabase.app',
+  projectId: 'nongchon-quiz',
+  appId: '1:788864580533:web:9c97e347f297dbb1f2b7fc'
 };
