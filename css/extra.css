@@ -80,3 +80,6 @@ button.tcard{color:inherit;white-space:normal}
 /* 해설 강조 — 색은 바꾸지 않고 굵기만 */
 .answerbox strong{color:inherit;font-weight:800}
 .card strong{color:var(--fill);font-weight:800}
+
+/* 참가자 — 제출 후 답 수정하기 / 수정 취소 */
+button.edit{width:100%;margin-top:4px;padding:15px;font-size:17px;font-weight:700;color:var(--ink);background:var(--panel)}

@@ -19,6 +19,7 @@ const S = {
   pick: null,
   sending: false,
   pending: null,            // 큐에 들어가 재전송을 기다리는 답 { qid, choice }
+  editing: null,            // 답을 고치는 중인 문제 id. 마감 전까지는 다시 눌러 덮어쓴다
   queue: 0,
   online: true,
   notice: '',
@@ -74,7 +75,7 @@ function leave(notice = '') {
   clearTeam();
   clearQueue();
   forgetSeen();
-  Object.assign(S, { team: null, pick: null, pending: null, myAnswer: null, notice, join: emptyJoin() });
+  Object.assign(S, { team: null, pick: null, pending: null, editing: null, myAnswer: null, notice, join: emptyJoin() });
   syncWatches();
   draw();
 }
@@ -84,10 +85,10 @@ function start() {
     const prev = S.live;
     S.live = v || { phase: 'lobby' };
     if (S.live.phase === 'quiz') {
-      if (S.live.id !== prev?.id) { S.pick = null; S.pending = null; }
+      if (S.live.id !== prev?.id) { S.pick = null; S.pending = null; S.editing = null; }
       if (S.live.open) seenAt(S.live.id);
       // 보기가 없다 = 아직 안 열렸거나 문제 리셋됨. 시간 기록과 고른 답을 버린다.
-      if (!S.live.choices) { forgetSeen(); S.pick = null; S.pending = null; }
+      if (!S.live.choices) { forgetSeen(); S.pick = null; S.pending = null; S.editing = null; }
     }
     syncWatches();
     draw();
@@ -155,7 +156,7 @@ async function submitAnswer() {
     { queue: true }
   );
   S.sending = false;
-  if (res.ok) S.myAnswer = { choice };
+  if (res.ok) { S.myAnswer = { choice }; S.editing = null; }
   else if (res.queued) S.pending = { qid: id, choice };
   else S.notice = '제출하지 못했습니다. 다시 눌러 주세요.';
   draw();
@@ -242,27 +243,40 @@ function viewQuiz() {
       h('div', { class: 'big' }, L.label), h('div', { class: 'sub' }, '곧 시작합니다 · 화면을 봐주세요'))];
   }
 
-  if (mine !== null) {
+  if (mine !== null && S.editing !== L.id) {
     return [badges(L), S.myAnswer
       ? waitbox(`✓ ${numLabel(L, mine)} 제출 완료`, ['잠시만 기다려주세요', h('br'), '곧 정답을 공개합니다'])
-      : waitbox(`${numLabel(L, mine)} 재전송 중…`, ['연결이 돌아오면 자동으로 다시 보냅니다', h('br'), '화면을 닫지 마세요'])];
+      : waitbox(`${numLabel(L, mine)} 재전송 중…`, ['연결이 돌아오면 자동으로 다시 보냅니다', h('br'), '화면을 닫지 마세요']),
+    L.open && S.myAnswer && h('button', {
+      class: 'edit', onclick: () => { S.editing = L.id; S.pick = mine; draw(); }
+    }, '답 수정하기')];
   }
 
   if (!L.open) return [badges(L), waitbox('답안이 마감되었어요', '곧 정답을 공개합니다')];
 
+  // 한 개 고르는 문제는 누르는 즉시 제출한다. 복수정답만 다 고른 뒤 제출 버튼을 누른다.
+  const tap = i => {
+    if (L.multi) { S.pick = (S.pick ^ 1 << i) || null; draw(); return; }
+    S.pick = i;
+    submitAnswer();
+  };
   return [
     badges(L),
+    S.editing === L.id && h('div', { class: 'notice' }, '다시 고를 답을 눌러주세요'),
     h('div', { class: 'opts' }, L.choices.map((c, i) =>
       h('button', {
         class: `opt ${S.pick !== null && picked(L, S.pick, i) ? 'sel' : ''}`, disabled: S.sending,
-        onclick: () => { S.pick = L.multi ? (S.pick ^ 1 << i) || null : i; draw(); }
+        onclick: () => tap(i)
       }, h('span', { class: 'n' }, mark(L, i))))),
-    h('button', { class: 'primary submit', disabled: S.pick === null || S.sending, onclick: submitAnswer },
-      S.sending ? '제출 중…' : S.pick === null ? (L.multi ? '해당하는 번호를 모두 골라주세요' : '답을 골라주세요')
-        : `${numLabel(L, S.pick)} 제출`),
+    L.multi && h('button', { class: 'primary submit', disabled: S.pick === null || S.sending, onclick: submitAnswer },
+      S.sending ? '제출 중…' : S.pick === null ? '해당하는 번호를 모두 골라주세요' : `${numLabel(L, S.pick)} 제출`),
+    !L.multi && S.sending && h('div', { class: 'status ok' }, '제출 중…'),
+    S.editing === L.id && h('button', {
+      class: 'edit', disabled: S.sending, onclick: () => { S.editing = null; S.pick = null; draw(); }
+    }, '수정 취소'),
     h('div', { class: 'status' }, L.multi
-      ? '해당하는 번호를 모두 누른 뒤 제출해주세요 · 제출 후에는 바꿀 수 없어요'
-      : '문제와 보기는 앞 화면에서 확인해주세요 · 제출 후에는 바꿀 수 없어요')
+      ? '해당하는 번호를 모두 누른 뒤 제출해주세요 · 마감 전까지 수정할 수 있어요'
+      : '번호를 누르면 바로 제출됩니다 · 마감 전까지 수정할 수 있어요')
   ];
 }
 
